@@ -83,12 +83,13 @@ function generate(file) {
     let str = "(function() {\n";
     str += "const modules = [];\n";
     str += "const moduleCache = [];\n";
-    str += "function cachePlaygroundModule(no) { const exp = {}; modules[no](exp); moduleCache[no] = exp; return exp; };\n";
+    str += "function cachePlaygroundModule(no) { const exp = {}; moduleCache[no] = exp; modules[no](exp); return exp; };\n";
     str += "function loadPlaygroundModule(no) { if (moduleCache[no] === undefined) { return cachePlaygroundModule(no); } return moduleCache[no]; };\n";
     for (let m of modules) {
         str += "modules.push(" + m.data + ");\n";
     }
     str += "const module0Data = {};\n";
+    str += "moduleCache[0] = module0Data;\n";
     str += "globalThis.module0Data = module0Data;\n";
     str += "modules[0](module0Data);\n";
     str += "})();\n";
