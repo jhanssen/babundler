@@ -35,7 +35,7 @@ function bundleFile(file) {
     const rx = / = require\("(\.[^"]*)"/;
 
     const data = fs.readFileSync(absfile, "utf8");
-    const no = ++funcno;
+    const no = funcno++;
 
     const fixup = modules.length;
     const fixups = [];
@@ -83,8 +83,10 @@ function generate(file) {
     let str = "(function() {\n";
     str += "const modules = [];\n";
     str += "const moduleCache = [];\n";
-    str += "function cachePlaygroundModule(no) { const exp = {}; moduleCache[no] = exp; modules[no](exp); return exp; };\n";
-    str += "function loadPlaygroundModule(no) { if (moduleCache[no] === undefined) { return cachePlaygroundModule(no); } return moduleCache[no]; };\n";
+    str += "function resolveLazy(no) { moduleCache[no]._lazyModule = false; modules[no](moduleCache[no]); }\n";
+    str += "function resolveLazies() { for (let i = 0; i < moduleCache.length; ++i) { if (moduleCache[i]._lazyModule) { moduleCache[i]._lazyModule = false; modules[i](moduleCache[i]); } delete moduleCache[i]._lazyModule; } }\n";
+    str += "function cachePlaygroundModule(no, lazy) { const exp = { _lazyModule: lazy }; moduleCache[no] = exp; if (!lazy) { modules[no](exp); } return exp; }\n";
+    str += "function loadPlaygroundModule(no, lazy) { if (moduleCache[no] === undefined) { return cachePlaygroundModule(no, lazy || false); } if (!lazy && moduleCache[no]._lazyModule) { resolveLazy(no); } return moduleCache[no]; }\n";
     for (let m of modules) {
         str += "modules.push(" + m.data + ");\n";
     }
@@ -92,6 +94,7 @@ function generate(file) {
     str += "moduleCache[0] = module0Data;\n";
     str += "globalThis.module0Data = module0Data;\n";
     str += "modules[0](module0Data);\n";
+    str += "resolveLazies();\n";
     str += "})();\n";
 
     fs.writeFileSync(file, str, "utf8");
