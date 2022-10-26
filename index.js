@@ -24,7 +24,10 @@ function currentDir() {
 }
 
 function bundleFile(file) {
-    const absfile = fs.realpathSync(currentDir() + file + ".js");
+    let absfile = file;
+    if (!fs.existsSync(file)) {
+        absfile = fs.realpathSync(currentDir() + absfile + ".js");
+    }
 
     for (const m of modules) {
         if (m.path === absfile) {
